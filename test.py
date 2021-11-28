@@ -1,7 +1,12 @@
+import RNA
 import numpy as np
 
-list = [0, 1, 4, 7, 8]
-remove_id_list = [4, 7]
-remove_index = np.where(np.array(list) == np.array(remove_id_list)[:, None])[-1]
+from utils.rna_lib import structure_dotB2Edge, structure_edge2DotB
 
-print(1)
+dotB = '(((((((....(((...........)))((((((((..(((((((((((((((((((...(((((......))))).)))))).)))))))))))))..))))))))..)))))))'
+edge_index = structure_dotB2Edge(dotB)
+dotB_ = structure_edge2DotB(edge_index)
+
+dist = RNA.hamming_distance(dotB_, dotB)
+
+print(dist)

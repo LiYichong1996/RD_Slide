@@ -5,6 +5,7 @@ import torch_geometric
 from torch_geometric.nn import conv as conv_g
 from torch_geometric.nn import pool as pool_g
 
+
 class Backbone(nn.Module):
     def __init__(self, in_size, out_size, hide_size_list):
         super(Backbone, self).__init__()
@@ -22,7 +23,7 @@ class Backbone(nn.Module):
     def forward(self, x, edge_index):
         for layer in self.layer_gcn:
             y = layer(x, edge_index)
-            y = F.leaky_relu(x)
+            y = F.leaky_relu(y)
         return y
 
 
@@ -109,7 +110,7 @@ class Critic(nn.Module):
             y = F.leaky_relu((self.fc1(x)))
             y = F.leaky_relu((self.fc2(y)))
 
-        value = pool_g.avg_pool_x(batch, x, batch)
+        value = pool_g.avg_pool_x(batch, y, batch)
 
         return value
 
