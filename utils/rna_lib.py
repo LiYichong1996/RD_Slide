@@ -364,7 +364,7 @@ def init_graph(graph, init_len, action_space):
 # 动作
 #############################################################
 
-def act(graph, place, action, action_space):
+def act(graph, action, place, action_space):
     """
     图动作
     :param graph:
