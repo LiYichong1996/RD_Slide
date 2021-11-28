@@ -1,7 +1,7 @@
 import torch
 import torch_geometric
 import RNA
-from utils.rna_lib import init_graph, get_graph, act
+from utils.rna_lib import init_graph, get_graph, act, seq_onehot2Base, get_distance_from_graph_norm
 import pathos.multiprocessing as pathos_mp
 import gym
 from functools import partial
@@ -40,12 +40,31 @@ class Env_RNA(gym.Env):
         return torch_geometric.data.Batch.from_data_list(self.graphs).clone()
 
     def step(self, actions, ep):
-        step_work = partial(act, place=ep, action_space=self.action_space)
-        self.graphs = self.pool.map(step_work, self.graphs, actions)
-        finished_list = [0] * len(self.graphs)
+        step_work = partial(self.act_, ep=ep, action_space=self.action_space)
+        step_result = self.pool.map(step_work, self.graphs, actions)
+        step_result = list(step_result)
+        step_result = list(zip(*step_result))
+        self.graphs = list(step_result[0])
+        reward_list = list(step_result[1])
+        finished_list = list(step_result[3])
+
+        return torch_geometric.data.Batch.from_data_list(self.graphs).clone().to_data_list(), reward_list, finished_list
+
+    @classmethod
+    def act_(cls, graph, action, ep, action_space):
+        graph = act(graph, action, ep, action_space)
+        reward = 0
+        finished = 0
+        if ep == len(graph.y['dotB']):
+            finished = 1
+            seq_base = seq_onehot2Base(graph.x)
+            graph.y['seq_base'] = seq_base
+            dist_norm = get_distance_from_graph_norm(graph)
+            reward = 1 - dist_norm
+        return graph, reward, finished
 
     def remove_graph(self, finish_id_list):
-        finish_index = np.argwhere(np.array(self.id_list) in finish_id_list)
+        finish_index = np.where(np.array(self.id_list) == np.array(finish_id_list)[:, None])[-1]
         remove_id_list = finish_id_list
         remove_graph_list = fetch_items(self.graphs, finish_index)
         self.graphs = [self.graphs[i] for i in range(len(self.graphs)) if i not in finish_index]
