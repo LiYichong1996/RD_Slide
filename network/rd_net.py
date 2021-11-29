@@ -7,16 +7,16 @@ from torch_geometric.nn import pool as pool_g
 
 
 class Backbone(nn.Module):
-    def __init__(self, in_size, out_size, hide_size_list):
+    def __init__(self, in_size, out_size, hide_size_list, normalize=False):
         super(Backbone, self).__init__()
         self.in_size = in_size
         self.out_size = out_size
         self.size_list = [in_size] + hide_size_list + [out_size]
 
-        self.layer_gcn  = []
+        self.layer_gcn = []
         for i in range(len(self.size_list) - 1):
             self.layer_gcn.append(
-                conv_g.GCNConv(self.size_list[i], self.size_list[i+1])
+                conv_g.GCNConv(self.size_list[i], self.size_list[i+1], normalize=normalize)
             )
         self.layer_gcn = nn.ModuleList(self.layer_gcn)
 
