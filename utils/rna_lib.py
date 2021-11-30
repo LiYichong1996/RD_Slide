@@ -16,9 +16,9 @@ base_color_dict = {'A': 'y', 'U': 'b', 'G': 'r', 'C': 'g'}
 base_list = ['A', 'U', 'C', 'G']
 onehot_list = [np.array([1, 0, 0, 0]), np.array([0, 1, 0, 0]), np.array([0, 0, 1, 0]), np.array([0, 0, 0, 1])]
 base_pair_dict_6 = {'A': ['U'], 'U': ['A', 'G'], 'G': ['U', 'C'], 'C': ['G'] }
-base_pair_dict_4 = {'A': ['U'], 'U': ['A'], 'G': ['C'], 'C': ['G'] }
+base_pair_dict_4 = {'A': ['U'], 'U': ['A'], 'C': ['G'], 'G': ['C']}
 base_pair_list_6 = [['A', 'U'], ['U', 'A'], ['U', 'G'], ['G', 'U'], ['G', 'C'], ['C', 'G']]
-base_pair_list_4 = [['A', 'U'], ['U', 'A'], ['G', 'C'], ['C', 'G']]
+base_pair_list_4 = [['A', 'U'], ['U', 'A'], ['C', 'G'], ['G', 'C']]
 
 
 #############################################################
@@ -356,7 +356,7 @@ def init_graph(graph, init_len, action_space):
         for next_place in next_places:
             if next_place > i + 1:
                 next_onehot = base2Onehot(pair[1])
-                graph.x[next_place] = next_onehot
+                graph.x[next_place.item()] = next_onehot
     return graph
 
 
@@ -389,7 +389,7 @@ def act(graph, action, place, action_space):
         if next_place > place + 1:
             next_base = pair[1]
             next_onehot = base2Onehot(next_base)
-            graph.x[next_place] = next_onehot
+            graph.x[next_place.item()] = next_onehot
     return graph
 
 
