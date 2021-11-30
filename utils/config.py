@@ -49,7 +49,7 @@ criticParam_dict = {
     'lr': 0.000001
 }
 
-for key, value in actorParam_dict.items():
+for key, value in criticParam_dict.items():
     parser.add_argument(key, action='store_const', const=value)
 
 criticParam = parser.parse_args()
