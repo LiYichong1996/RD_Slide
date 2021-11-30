@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pathos.multiprocessing as pathos_mp
 from functools import partial
-from environment import fetch_items
+from rl_lib.environment import fetch_items
 
 
 Transition = namedtuple('Transition', ['state', 'action', 'a_log_prob', 'step', 'reward', 'next_state', 'done'])
@@ -87,7 +87,7 @@ class PPO(nn.Module):
         return action_log_probs, values, dist_entropy
 
     def work(self, data_batch_, index, type='sample'):
-        data_batch = data_batch_.clone.to(self.device)
+        data_batch = data_batch_.clone().to(self.device)
         x = Variable(data_batch.x.float().to(self.device))
         edge_index = Variable(data_batch.edge_index.to(self.device))
         edge_attr = Variable(data_batch.edge_attr.to(self.device))
