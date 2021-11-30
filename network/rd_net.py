@@ -20,11 +20,11 @@ class Backbone(nn.Module):
             )
         self.layer_gcn = nn.ModuleList(self.layer_gcn)
 
-    def forward(self, x, edge_index):
+    def forward(self, x, edge_index, edge_w=None):
         for layer in self.layer_gcn:
-            y = layer(x, edge_index)
-            y = F.leaky_relu(y)
-        return y
+            x = layer(x, edge_index, edge_w)
+            x = F.leaky_relu(x)
+        return x
 
 
 class Actor(nn.Module):
