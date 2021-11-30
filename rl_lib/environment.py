@@ -37,7 +37,7 @@ class Env_RNA(gym.Env):
         self.graphs = self.pool.map(gen_work, self.dotB_list)
         init_work = partial(init_graph, init_len=init_len, action_space=self.action_space)
         self.graphs = self.pool.map(init_work, self.graphs)
-        self.len_list = [len(graph.y['seq']) for graph in self.graphs]
+        self.len_list = [len(graph.y['dotB']) for graph in self.graphs]
 
         return torch_geometric.data.Batch.from_data_list(self.graphs).clone()
 
@@ -48,7 +48,7 @@ class Env_RNA(gym.Env):
         step_result = list(zip(*step_result))
         self.graphs = list(step_result[0])
         reward_list = list(step_result[1])
-        finished_list = list(step_result[3])
+        finished_list = list(step_result[2])
 
         return torch_geometric.data.Batch.from_data_list(self.graphs).clone().to_data_list(), reward_list, finished_list
 
@@ -57,7 +57,7 @@ class Env_RNA(gym.Env):
         graph = act(graph, action, ep, action_space)
         reward = 0
         finished = 0
-        if ep == len(graph.y['dotB']-1):
+        if ep == len(graph.y['dotB']) - 1:
             finished = 1
             seq_base = seq_onehot2Base(graph.x)
             graph.y['seq_base'] = seq_base
