@@ -19,7 +19,7 @@ def fetch_items(list, index):
 
 
 class Env_RNA(gym.Env):
-    def __init__(self, dotB_list, action_space, h_weight,pool=None):
+    def __init__(self, dotB_list, action_space, h_weight, pool=None):
         super(Env_RNA, self).__init__()
         if pool is None:
             self.pool = pathos_mp.ProcessPool()
@@ -57,7 +57,7 @@ class Env_RNA(gym.Env):
         graph = act(graph, action, ep, action_space)
         reward = 0
         finished = 0
-        if ep == len(graph.y['dotB']):
+        if ep == len(graph.y['dotB']-1):
             finished = 1
             seq_base = seq_onehot2Base(graph.x)
             graph.y['seq_base'] = seq_base
@@ -65,9 +65,10 @@ class Env_RNA(gym.Env):
             reward = 1 - dist_norm
         return graph, reward, finished
 
-    def remove_graph(self, finish_id_list):
-        finish_index = np.where(np.array(self.id_list) == np.array(finish_id_list)[:, None])[-1]
-        remove_id_list = finish_id_list
+    def remove_graph(self, finish_index): # finish_id_list):
+        # finish_index = np.where(np.array(self.id_list) == np.array(finish_id_list)[:, None])[-1]
+        # remove_id_list = finish_id_list
+        remove_id_list = fetch_items(self.id_list, finish_index)
         remove_graph_list = fetch_items(self.graphs, finish_index)
         self.graphs = [self.graphs[i] for i in range(len(self.graphs)) if i not in finish_index]
         self.id_list = [self.id_list[i] for i in range(len(self.id_list)) if i not in finish_index]
