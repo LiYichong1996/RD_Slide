@@ -114,7 +114,7 @@ class PPO(nn.Module):
         buffer_tmp = self.buffer_list[id_chain] + [transition]
         self.buffer_list[id_chain] = buffer_tmp
 
-    def train(self, batch_size=None):
+    def trainStep(self, batch_size=None):
         if batch_size is None:
             batch_size = self.batch_size
 
