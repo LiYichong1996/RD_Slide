@@ -15,7 +15,8 @@ backboneParam_dict = {
     'in_size': 4,
     'out_size': 16,
     'hide_size_list': [8],
-    'normalize': True
+    'normalize': True,
+    'rl': 0.000001
 }
 
 for key, value in backboneParam_dict.items():
@@ -29,7 +30,8 @@ actorParam_dict = {
     'out_size': action_space,
     'hide_size_list': [8],
     'n_gcn': 0,
-    'normalize': True
+    'normalize': True,
+    'rl': 0.000001
 }
 
 for key, value in actorParam_dict.items():
@@ -43,7 +45,8 @@ criticParam_dict = {
     'out_size': 1,
     'hide_size_list': [8, 4],
     'n_gcn': 1,
-    'normalize': True
+    'normalize': True,
+    'rl': 0.000001
 }
 
 for key, value in actorParam_dict.items():
