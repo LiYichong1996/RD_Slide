@@ -364,7 +364,7 @@ def init_graph(graph, init_len, action_space):
 # 动作
 #############################################################
 
-def act(graph, action, place, action_space):
+def act(graph, action, place, action_space, do_skip):
     """
     图动作
     :param graph:
@@ -379,17 +379,21 @@ def act(graph, action, place, action_space):
         base_pair_dict = base_pair_dict_6
         base_pair_list = base_pair_list_6
 
-    pair = base_pair_list[action]
-    base = pair[0]
-    onehot = base2Onehot(base)
-    graph.x[place] = onehot
-    index = (graph.edge_index[0, :] == place).nonzero()
-    next_places = graph.edge_index[1, index]
-    for next_place in next_places:
-        if (next_place > place + 1) or (next_place < place -1):
-            next_base = pair[1]
-            next_onehot = base2Onehot(next_base)
-            graph.x[next_place.item()] = next_onehot
-    return graph
+    skip = 0
+    if torch.any(graph.x[place] == 1.) and do_skip:
+        skip = 1
+    else:
+        pair = base_pair_list[action]
+        base = pair[0]
+        onehot = base2Onehot(base)
+        graph.x[place] = onehot
+        index = (graph.edge_index[0, :] == place).nonzero()
+        next_places = graph.edge_index[1, index]
+        for next_place in next_places:
+            if (next_place > place + 1) or (next_place < place -1):
+                next_base = pair[1]
+                next_onehot = base2Onehot(next_base)
+                graph.x[next_place.item()] = next_onehot
+    return graph, skip
 
 
