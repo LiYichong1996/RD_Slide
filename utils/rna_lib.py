@@ -386,7 +386,7 @@ def act(graph, action, place, action_space):
     index = (graph.edge_index[0, :] == place).nonzero()
     next_places = graph.edge_index[1, index]
     for next_place in next_places:
-        if next_place > place + 1:
+        if (next_place > place + 1) or (next_place < place -1):
             next_base = pair[1]
             next_onehot = base2Onehot(next_base)
             graph.x[next_place.item()] = next_onehot
