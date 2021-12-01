@@ -8,7 +8,7 @@ from torch_geometric.nn import pool as pool_g
 
 
 class Backbone(nn.Module):
-    def __init__(self, in_size, out_size, hide_size_list, normalize=False):
+    def __init__(self, in_size, out_size, hide_size_list, normalize=False, bias=False):
         super(Backbone, self).__init__()
         self.in_size = in_size
         self.out_size = out_size
@@ -17,7 +17,7 @@ class Backbone(nn.Module):
         self.layer_gcn = []
         for i in range(len(self.size_list) - 1):
             self.layer_gcn.append(
-                conv_g.GCNConv(self.size_list[i], self.size_list[i+1], normalize=normalize)
+                conv_g.GCNConv(self.size_list[i], self.size_list[i+1], normalize=normalize, bias=bias)
             )
         self.layer_gcn = nn.ModuleList(self.layer_gcn)
 
@@ -29,7 +29,7 @@ class Backbone(nn.Module):
 
 
 class Actor(nn.Module):
-    def __init__(self, in_size, out_size, hide_size_list, n_gcn, normalize=False):
+    def __init__(self, in_size, out_size, hide_size_list, n_gcn, normalize=False, bias=False):
         super(Actor, self).__init__()
         self.in_size = in_size
         self.out_size = out_size
@@ -41,13 +41,13 @@ class Actor(nn.Module):
         self.gcn_layers = []
         for i in range(n_gcn):
             self.gcn_layers.append(
-                conv_g.GCNConv(self.size_list[i], self.size_list[i+1])
+                conv_g.GCNConv(self.size_list[i], self.size_list[i+1], bias=bias)
             )
         self.gcn_layers = nn.ModuleList(self.gcn_layers)
 
-        self.fc1 = nn.Linear(self.size_list[self.n_gcn], self.size_list[self.n_gcn+1])
+        self.fc1 = nn.Linear(self.size_list[self.n_gcn], self.size_list[self.n_gcn+1], bias=bias)
         # self.norm1 = nn.BatchNorm1d(self.size_list[self.n_gcn+1])
-        self.fc2 = nn.Linear(self.size_list[self.n_gcn+1], self.size_list[-1])
+        self.fc2 = nn.Linear(self.size_list[self.n_gcn+1], self.size_list[-1], bias=bias)
         # self.norm2 = nn.BatchNorm1d(self.size_list[-1])
         if self.normalize:
             self.norm1 = nn.BatchNorm1d(self.size_list[self.n_gcn + 1])
@@ -73,7 +73,7 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, in_size, out_size, hide_size_list, n_gcn, normalize=False):
+    def __init__(self, in_size, out_size, hide_size_list, n_gcn, normalize=False, bias=False):
         super(Critic, self).__init__()
         self.in_size = in_size
         self.out_size = out_size
@@ -85,13 +85,13 @@ class Critic(nn.Module):
         self.gcn_layers = []
         for i in range(n_gcn):
             self.gcn_layers.append(
-                conv_g.GCNConv(self.size_list[i], self.size_list[i + 1])
+                conv_g.GCNConv(self.size_list[i], self.size_list[i + 1], bias=bias)
             )
         self.gcn_layers = nn.ModuleList(self.gcn_layers)
 
-        self.fc1 = nn.Linear(self.size_list[self.n_gcn], self.size_list[self.n_gcn + 1])
+        self.fc1 = nn.Linear(self.size_list[self.n_gcn], self.size_list[self.n_gcn + 1], bias=bias)
         # self.norm1 = nn.BatchNorm1d(self.size_list[self.n_gcn+1])
-        self.fc2 = nn.Linear(self.size_list[self.n_gcn + 1], self.size_list[-1])
+        self.fc2 = nn.Linear(self.size_list[self.n_gcn + 1], self.size_list[-1], bias=bias)
         # self.norm2 = nn.BatchNorm1d(self.size_list[-1])
         if self.normalize:
             self.norm1 = nn.BatchNorm1d(self.size_list[self.n_gcn + 1])

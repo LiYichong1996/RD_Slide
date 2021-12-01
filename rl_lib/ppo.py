@@ -47,9 +47,9 @@ class PPO(nn.Module):
         self.action_space = action_space
         self.device = device
 
-        self.backbone = Backbone(param_b.in_size, param_b.out_size, param_b.hide_size_list, param_b.normalize)
-        self.actor = Actor(param_a.in_size, param_a.out_size, param_a.hide_size_list, param_a.n_gcn, param_a.normalize)
-        self.critic = Critic(param_c.in_size, param_c.out_size, param_c.hide_size_list, param_c.n_gcn, param_c.normalize)
+        self.backbone = Backbone(param_b.in_size, param_b.out_size, param_b.hide_size_list, param_b.normalize, param_b.bias)
+        self.actor = Actor(param_a.in_size, param_a.out_size, param_a.hide_size_list, param_a.n_gcn, param_a.normalize, param_a.bias)
+        self.critic = Critic(param_c.in_size, param_c.out_size, param_c.hide_size_list, param_c.n_gcn, param_c.normalize, param_c.bias)
 
         self.batch_size = batch_size
 
