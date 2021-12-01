@@ -46,7 +46,9 @@ def main():
     # create env
     init_len = 1
 
-    env = Env_RNA(dotB_list=dotB_list, action_space=action_space, h_weight=2, pool=pool_env)
+    do_skip = True
+
+    env = Env_RNA(dotB_list=dotB_list, action_space=action_space, h_weight=2, pool=pool_env, do_skip=do_skip)
 
     env.reset(init_len=init_len)
 
@@ -176,17 +178,19 @@ def main():
             actions, a_log_probs = agent.work(state, step_index, action_type)
 
             # environment react
-            next_state, reward_list, finished_list = env.step(actions, t-1+init_len)
+            next_state, reward_list, finished_list, skip_list = env.step(actions, t-1+init_len)
 
             # put in buffer
             action_list = actions.split(1, dim=0)
             a_log_prob_list = a_log_probs.split(1, dim=0)
 
-            for graph, action, a_log_prob, reward, next_graph, id, done in zip(
-                state.clone().to_data_list(), action_list, a_log_prob_list, reward_list, next_state, env.id_list, finished_list
+            for graph, action, a_log_prob, reward, next_graph, id, done, skip in zip(
+                state.clone().to_data_list(), action_list, a_log_prob_list, reward_list, next_state, env.id_list,
+                    finished_list, skip_list
             ):
-                trans = Transition(graph, action, a_log_prob, t-1+init_len, reward, next_graph, done)
-                agent.storeTransition(trans, id)
+                if skip == 0:
+                    trans = Transition(graph, action, a_log_prob, t-1+init_len, reward, next_graph, done)
+                    agent.storeTransition(trans, id)
                 if reward == 1:
                     done_log_f.write(
                         'Episode_{} Graph_{} is done! Struct: {} | Sequence: {}'.format(
