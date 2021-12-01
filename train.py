@@ -19,7 +19,7 @@ import pathos.multiprocessing as pathos_mp
 def main():
     ################## training ##################
 
-    print("========= train =========")
+    print("=========================== train ===========================")
 
     ################## global configration ##################
 
@@ -85,7 +85,7 @@ def main():
     round_time = 300
 
     # step in a round
-    max_ep_len = max_len
+    max_ep_len = max_len - init_len
 
     # max steps for training
     max_train_timestep = round_time * max_ep_len
@@ -132,8 +132,8 @@ def main():
     print('tensorboard at: ' + tensor_dir)
 
     # running time files
-    time_dir = log_dir_root + '/program.prof'
-    cProfile.run('re.compile("ccc")', filename=time_dir)
+    # time_dir = log_dir_root + '/program.prof'
+    # cProfile.run('re.compile("ccc")', filename=time_dir)
 
     # log files
     log_f_name = log_dir + '/log'
@@ -165,17 +165,18 @@ def main():
         print("=========================== round " + str(i_episode) + " ===========================")
 
         # reset the environment for a new round
-        state = torch_geometric.data.Batch.from_data_list(env.reset(init_len))
+        state = env.reset(init_len)
+        # state = torch_geometric.data.Batch.from_data_list(state)
         state.x, state.edge_index = Variable(state.x.float().to(device)), Variable(state.edge_index.to(device))
         state.edge_attr = Variable(state.edge_attr.to(device))
 
         for t in range(1, max_ep_len+1):
             # agent work
-            step_index = env.get_index_ep(place=t-1)
+            step_index = env.get_index_ep(place=t-1+init_len)
             actions, a_log_probs = agent.work(state, step_index, action_type)
 
             # environment react
-            next_state, reward_list, finished_list = env.step(actions, t-1)
+            next_state, reward_list, finished_list = env.step(actions, t-1+init_len)
 
             # put in buffer
             action_list = actions.split(1, dim=0)
@@ -184,7 +185,7 @@ def main():
             for graph, action, a_log_prob, reward, next_graph, id, done in zip(
                 state.clone().to_data_list(), action_list, a_log_prob_list, reward_list, next_state, env.id_list, finished_list
             ):
-                trans = Transition(graph, action, a_log_prob, t-1, reward, next_graph, done)
+                trans = Transition(graph, action, a_log_prob, t-1+init_len, reward, next_graph, done)
                 agent.storeTransition(trans, id)
                 if reward == 1:
                     done_log_f.write(
@@ -214,17 +215,17 @@ def main():
             state.edge_attr = Variable(state.edge_attr.to(device))
 
         # log data for a round
-        final_graphs = [chain[-1].next_state for chain in agent.buffer]
+        final_graphs = [chain[-1].next_state for chain in agent.buffer_list]
         final_seqs_onehot = [graph.x[:, :4] for graph in final_graphs]
         final_seqs_base = list(map(seq_onehot2Base, final_seqs_onehot))
         # final_seqs_base = [graph.y['seq_base'] for graph in final_graphs]
         final_dotBs = [graph.y['dotB'] for graph in final_graphs]
         final_distance = pool_main.map(get_distance_from_base, final_seqs_base, final_dotBs)
         final_distance = list(final_distance)
-        final_rewards = []
-        for i in range(len(agent.buffer)):
-            rewards = [g.reward for g in agent.buffer[i]]
-            final_rewards.append(np.array(rewards).sum())
+        final_rewards = [chain[-1].reward for chain in agent.buffer_list]
+        # for i in range(len(agent.buffer_list)):
+        #     rewards = [g.reward for g in agent.buffer_list[i]]
+        #     final_rewards.append(np.array(rewards).sum())
 
         # log for a round
         if time_step % log_freq == 0:
@@ -235,13 +236,13 @@ def main():
                                                     final_seqs_base[i]))
                 log_f_list[i].flush()
 
-            for i in range(len(act_log_f_list)):
-                action_list = [str(t.action) for t in agent.buffer[i]]
-                act_str = ','.join(action_list)
-                act_log_f_list[i].write(
-                    act_str + '\n'
-                )
-                act_log_f_list[i].flush()
+            # for i in range(len(act_log_f_list)):
+            #     action_list = [str(t.action) for t in agent.buffer[i]]
+            #     act_str = ','.join(action_list)
+            #     act_log_f_list[i].write(
+            #         act_str + '\n'
+            #     )
+            #     act_log_f_list[i].flush()
 
         # train the network
         if time_step % update_timestep == 0:
