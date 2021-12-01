@@ -69,7 +69,7 @@ def main():
     buffer_clean_freq = 3
 
     # learning rate decay
-    lr_decay = 0.095
+    lr_decay = 0.995
 
     agent = PPO(
         backboneParam, actorParam, criticParam, k_epochs, batch_size, eps_clip, gamma,
