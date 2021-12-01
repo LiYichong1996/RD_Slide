@@ -19,7 +19,7 @@ def fetch_items(list, index):
 
 
 class Env_RNA(gym.Env):
-    def __init__(self, dotB_list, action_space, h_weight, pool=None):
+    def __init__(self, dotB_list, action_space, h_weight, pool=None, do_skip=True):
         super(Env_RNA, self).__init__()
         if pool is None:
             self.pool = pathos_mp.ProcessPool()
@@ -31,6 +31,7 @@ class Env_RNA(gym.Env):
         self.h_weight = h_weight
         self.id_list = list(range(len(dotB_list)))
         self.len_list = []
+        self.do_skip = do_skip
 
     def reset(self, init_len=1):
         gen_work = partial(get_graph, h_weight=self.h_weight)
@@ -42,19 +43,20 @@ class Env_RNA(gym.Env):
         return torch_geometric.data.Batch.from_data_list(self.graphs).clone()
 
     def step(self, actions, ep):
-        step_work = partial(self.act_, ep=ep, action_space=self.action_space)
+        step_work = partial(self.act_, ep=ep, action_space=self.action_space, do_skip=self.do_skip)
         step_result = self.pool.map(step_work, self.graphs, actions)
         step_result = list(step_result)
         step_result = list(zip(*step_result))
         self.graphs = list(step_result[0])
         reward_list = list(step_result[1])
         finished_list = list(step_result[2])
+        skip_list = list(step_result[3])
 
-        return torch_geometric.data.Batch.from_data_list(self.graphs).clone().to_data_list(), reward_list, finished_list
+        return torch_geometric.data.Batch.from_data_list(self.graphs).clone().to_data_list(), reward_list, finished_list, skip_list
 
     @classmethod
-    def act_(cls, graph, action, ep, action_space):
-        graph = act(graph, action, ep, action_space)
+    def act_(cls, graph, action, ep, action_space, do_skip):
+        graph, skip = act(graph, action, ep, action_space, do_skip=do_skip)
         reward = 0
         finished = 0
         if ep == len(graph.y['dotB']) - 1:
@@ -63,7 +65,7 @@ class Env_RNA(gym.Env):
             graph.y['seq_base'] = seq_base
             dist_norm = get_distance_from_graph_norm(graph)
             reward = 1 - dist_norm
-        return graph, reward, finished
+        return graph, reward, finished, skip
 
     def remove_graph(self, finish_index): # finish_id_list):
         # finish_index = np.where(np.array(self.id_list) == np.array(finish_id_list)[:, None])[-1]
