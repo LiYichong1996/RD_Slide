@@ -1,4 +1,5 @@
 import torch
+import torch_scatter
 from torch import nn as nn
 import torch.nn.functional as F
 import torch_geometric
@@ -110,7 +111,7 @@ class Critic(nn.Module):
             y = F.leaky_relu((self.fc1(x)))
             y = F.leaky_relu((self.fc2(y)))
 
-        value = pool_g.avg_pool_x(batch, y, batch)
+        value = pool_g.avg_pool_x(batch, y, batch)[0]
 
         return value
 
