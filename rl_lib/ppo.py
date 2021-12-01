@@ -66,15 +66,16 @@ class PPO(nn.Module):
         self.buffer_loop = max_loop
 
     def forward(self, data_batch_, actions, index):
-        data_batch = data_batch_.clone.to(self.device)
+        data_batch = data_batch_.clone().to(self.device)
         x = Variable(data_batch.x.float().to(self.device))
         edge_index = Variable(data_batch.edge_index.to(self.device))
         edge_attr = Variable(data_batch.edge_attr.to(self.device))
         edge_weight = edge_attr.view(-1, ).float()
+        batch = data_batch.batch
 
         feature = self.backbone(x, edge_index, edge_weight)
 
-        values = self.critic(feature, edge_index, edge_weight)
+        values = self.critic(feature, edge_index, batch, edge_weight)
 
         graphs_probs = self.actor(feature, edge_index, edge_weight)
 
@@ -135,13 +136,14 @@ class PPO(nn.Module):
 
             R = 0
             Gt_list_tmp = []
-            for r, done in zip(reward_list_tmp.reverse(), done_list_tmp.reverse()):
+            for r, done in zip(reward_list_tmp[::-1], done_list_tmp[::-1]):
                 if done:
                     R = 0
                 R = r + self.gamma * R
                 Gt_list_tmp.insert(0, R)
 
             graph_list += graph_list_tmp
+            action_list += action_list_tmp
             Gt_list += Gt_list_tmp
             step_list += step_list_tmp
             old_a_log_probs_list += old_a_log_probs_list_tmp\
@@ -168,11 +170,11 @@ class PPO(nn.Module):
                 graphs_index = fetch_items(graph_list, index)
                 len_index = [len(graph.y['dotB']) for graph in graphs_index]
                 len_index = [1] + len_index[:-1]
-                node_index = [len_index[i] + step_index[i] - 1 for i in range(len(len_index))]
+                node_index = [len_index[i] + step_index[i].item() - 1 for i in range(len(len_index))]
                 graphs_index = torch_geometric.data.Batch.from_data_list(graphs_index).to(self.device)
 
                 a_log_probs, values, dist_entropy = self.forward(graphs_index, actions_index, node_index)
-                delta = Gt_index - values
+                delta = Gt_index - values.view(-1,)
                 advantage = delta.view(-1,)
 
                 ratio = torch.exp(a_log_probs - old_a_log_probs[index].detach())
