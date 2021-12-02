@@ -111,7 +111,7 @@ class Critic(nn.Module):
             y = F.leaky_relu((self.fc1(x)))
             y = F.leaky_relu((self.fc2(y)))
 
-        value = pool_g.avg_pool_x(batch, y, batch)[0]
-
+        # value = pool_g.avg_pool_x(batch, y, batch)[0]
+        value = torch_geometric.graphgym.global_add_pool(y, batch)
         return value
 
