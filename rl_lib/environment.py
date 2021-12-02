@@ -42,6 +42,7 @@ class Env_RNA(gym.Env):
         self.len_list = []
         self.do_skip = do_skip
         self.observe = observe
+        self.max_len = 0
 
     def reset(self, init_len=1):
         gen_work = partial(get_graph, h_weight=self.h_weight)
@@ -49,6 +50,7 @@ class Env_RNA(gym.Env):
         init_work = partial(init_graph, init_len=init_len, action_space=self.action_space)
         self.graphs = self.pool.map(init_work, self.graphs)
         self.len_list = [len(graph.y['dotB']) for graph in self.graphs]
+        self.max_len = max(self.len_list)
 
         if self.observe == 'sub':
             observe_work = partial(get_subgraph_exist, aim_node=init_len)
@@ -70,7 +72,11 @@ class Env_RNA(gym.Env):
         skip_list = list(step_result[3])
 
         if self.observe == 'sub':
-            observe_work = partial(get_subgraph_exist, aim_node=ep + 1)
+            if ep == self.max_len - 1:
+                ep_ = ep
+            else:
+                ep_ = ep + 1
+            observe_work = partial(get_subgraph_exist, aim_node=ep_)
             observe_graph_list = self.pool.map(observe_work, self.graphs)
         else:
             observe_graph_list = torch_geometric.data.Batch.from_data_list(self.graphs).clone().to_data_list()
