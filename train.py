@@ -49,7 +49,9 @@ def main():
 
     do_skip = False
 
-    env = Env_RNA(dotB_list=dotB_list, action_space=action_space, h_weight=2, pool=pool_env, do_skip=do_skip)
+    observe = 'sub'
+
+    env = Env_RNA(dotB_list=dotB_list, action_space=action_space, h_weight=2, pool=pool_env, do_skip=do_skip, observe=observe)
 
     env.reset(init_len=init_len)
 
@@ -70,7 +72,7 @@ def main():
     buffer_clean_freq = 3
 
     # learning rate decay
-    lr_decay = 0.995
+    lr_decay = 0.999
 
     agent = PPO(
         backboneParam, actorParam, criticParam, k_epochs, batch_size, eps_clip, gamma,
@@ -215,7 +217,8 @@ def main():
             time_step += 1
 
             # renew the state
-            state = torch_geometric.data.Batch.from_data_list(env.graphs).clone()
+            # state = torch_geometric.data.Batch.from_data_list(env.graphs).clone()
+            state = torch_geometric.data.Batch.from_data_list(next_state)
             state.x, state.edge_index = Variable(state.x.float().to(device)), Variable(state.edge_index.to(device))
             state.edge_attr = Variable(state.edge_attr.to(device))
 
