@@ -1,11 +1,32 @@
+import os
+
 import RNA
 import numpy as np
 import torch
 
-from utils.rna_lib import structure_dotB2Edge, structure_edge2DotB
+from rl_lib.environment import Env_RNA
+from utils.config import action_space
+from utils.rna_lib import get_subgraph_exist
 
-t = torch.Tensor([0,0,0,1])
+root = os.path.dirname(os.path.realpath(__file__))
 
-flag = torch.any(t == 1.)
+# load data
+data_dir = root + '/data/raw/rfam_learn/train/1.rna'
+dotB_list = []
+f = open(data_dir)
+iter_f = iter(f)
+for line in iter_f:
+    line = line.replace('\n', '')
+    dotB_list.append(line)
 
-print(flag)
+init_len = 3
+
+do_skip = True
+
+env = Env_RNA(dotB_list=dotB_list, action_space=action_space, h_weight=2, do_skip=do_skip)
+
+env.reset(init_len=init_len)
+
+get_subgraph_exist(env.graphs[0], 3)
+
+
