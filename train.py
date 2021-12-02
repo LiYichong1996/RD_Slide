@@ -41,12 +41,13 @@ def main():
     f = open(data_dir)
     iter_f = iter(f)
     for line in iter_f:
-        dotB_list.append(line.replace('/n', ''))
+        line = line.replace('\n', '')
+        dotB_list.append(line)
 
     # create env
     init_len = 1
 
-    do_skip = True
+    do_skip = False
 
     env = Env_RNA(dotB_list=dotB_list, action_space=action_space, h_weight=2, pool=pool_env, do_skip=do_skip)
 
@@ -84,7 +85,7 @@ def main():
     ################## processing details ##################
 
     # round times
-    round_time = 300
+    round_time = 999
 
     # step in a round
     max_ep_len = max_len - init_len
