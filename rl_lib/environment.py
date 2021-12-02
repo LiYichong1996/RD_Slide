@@ -1,7 +1,7 @@
 import torch
 import torch_geometric
 import RNA
-from utils.rna_lib import init_graph, get_graph, act, seq_onehot2Base, get_distance_from_graph_norm
+from utils.rna_lib import init_graph, get_graph, act, seq_onehot2Base, get_distance_from_graph_norm, get_subgraph_exist
 import pathos.multiprocessing as pathos_mp
 import gym
 from functools import partial
@@ -19,7 +19,16 @@ def fetch_items(list, index):
 
 
 class Env_RNA(gym.Env):
-    def __init__(self, dotB_list, action_space, h_weight, pool=None, do_skip=True):
+    def __init__(self, dotB_list, action_space, h_weight, pool=None, do_skip=True, observe='all'):
+        """
+        RNA设计环境
+        :param dotB_list:
+        :param action_space:
+        :param h_weight:
+        :param pool:
+        :param do_skip:
+        :param observe:
+        """
         super(Env_RNA, self).__init__()
         if pool is None:
             self.pool = pathos_mp.ProcessPool()
@@ -32,6 +41,7 @@ class Env_RNA(gym.Env):
         self.id_list = list(range(len(dotB_list)))
         self.len_list = []
         self.do_skip = do_skip
+        self.observe = observe
 
     def reset(self, init_len=1):
         gen_work = partial(get_graph, h_weight=self.h_weight)
@@ -40,7 +50,14 @@ class Env_RNA(gym.Env):
         self.graphs = self.pool.map(init_work, self.graphs)
         self.len_list = [len(graph.y['dotB']) for graph in self.graphs]
 
-        return torch_geometric.data.Batch.from_data_list(self.graphs).clone()
+        if self.observe == 'sub':
+            observe_work = partial(get_subgraph_exist, aim_node=init_len)
+            observe_graph_list = self.pool.map(observe_work, self.graphs)
+            observe_graphs = torch_geometric.data.Batch.from_data_list(observe_graph_list)
+        else:
+            observe_graphs = torch_geometric.data.Batch.from_data_list(self.graphs).clone()
+
+        return observe_graphs
 
     def step(self, actions, ep):
         step_work = partial(self.act_, ep=ep, action_space=self.action_space, do_skip=self.do_skip)
@@ -52,7 +69,13 @@ class Env_RNA(gym.Env):
         finished_list = list(step_result[2])
         skip_list = list(step_result[3])
 
-        return torch_geometric.data.Batch.from_data_list(self.graphs).clone().to_data_list(), reward_list, finished_list, skip_list
+        if self.observe == 'sub':
+            observe_work = partial(get_subgraph_exist, aim_node=ep + 1)
+            observe_graph_list = self.pool.map(observe_work, self.graphs)
+        else:
+            observe_graph_list = torch_geometric.data.Batch.from_data_list(self.graphs).clone().to_data_list()
+
+        return observe_graph_list, reward_list, finished_list, skip_list
 
     @classmethod
     def act_(cls, graph, action, ep, action_space, do_skip):
