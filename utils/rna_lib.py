@@ -396,4 +396,44 @@ def act(graph, action, place, action_space, do_skip):
                 graph.x[next_place.item()] = next_onehot
     return graph, skip
 
+#############################################################
+# 获取子图
+#############################################################
+
+def get_subgraph_exist(graph, aim_node):
+    """
+    获取包含当前目标点及已存在点的子图
+    :param graph:
+    :param aim_node:
+    :return:
+    """
+    # 获取存在点的坐标
+    exist_nodes = torch.any(graph.x == 1, dim=1).nonzero().view(-1,).tolist()
+    # 查找目标点是否存在氢键链接
+    index = (graph.edge_index[0, :] == aim_node).nonzero()
+    next_nodes = graph.edge_index[1, index]
+    aim_node_h = -1
+    for next_node in next_nodes:
+        if next_node > aim_node + 1 or next_node < aim_node - 1:
+            aim_node_h = next_node.item()
+    if aim_node_h >= 0:
+        subset_nodes = exist_nodes + [aim_node_h, aim_node]
+    else:
+        subset_nodes = exist_nodes + [aim_node]
+
+    # 去冗余排序
+    subset_nodes = list(set(subset_nodes))
+    subset_nodes.sort()
+
+    sub_edge_index, sub_edge_attr = torch_geometric.utils.subgraph(subset_nodes, graph.edge_index, graph.edge_attr)
+
+    sub_x = graph.x.clone()
+
+    sub_y = graph.y
+
+    subgraph = torch_geometric.data.Data(sub_x, sub_edge_index, sub_edge_attr, sub_y)
+
+    return subgraph
+
+
 
