@@ -47,9 +47,9 @@ def main():
     # create env
     init_len = 1
 
-    do_skip = False
+    do_skip = True
 
-    observe = 'sub'
+    observe = 'all'
 
     env = Env_RNA(dotB_list=dotB_list, action_space=action_space, h_weight=2, pool=pool_env, do_skip=do_skip, observe=observe)
 
