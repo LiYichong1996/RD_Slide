@@ -45,8 +45,8 @@ actorParam = parser.parse_args()
 criticParam_dict = {
     'in_size': 16,
     'out_size': 1,
-    'hide_size_list': [8, 4],
-    'n_gcn': 1,
+    'hide_size_list': [8],
+    'n_gcn': 0,
     'normalize': False,
     'lr': 0.000001,
     'bias': False
